@@ -9,9 +9,9 @@ def get_windows(img):
     w_very_far = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[350, 550],
                          xy_window=(64,48), xy_overlap=(0.7, 0.7))
     w_far = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[350, 550],
-                         xy_window=(96,64), xy_overlap=(0.7, 0.7))
+                         xy_window=(96,64), xy_overlap=(0.5, 0.5))
     w_medium_s = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[400, 650],
-                              xy_window=(128,96), xy_overlap=(0.5, 0.5))
+                              xy_window=(128,96), xy_overlap=(0.7, 0.7))
     w_medium_l = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[400, 660],
                               xy_window=(128,128), xy_overlap=(0.5, 0.5))
     w_medium_b = slide_window(img, x_start_stop=[18, 1280], y_start_stop=[380, 660],
@@ -19,6 +19,7 @@ def get_windows(img):
 
     windows = w_medium_b + w_medium_s + w_medium_l + w_far
     windows = w_medium_b + w_medium_s + w_medium_l
+    windows = w_far + w_medium_s + w_medium_l
     return windows
 
 def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],

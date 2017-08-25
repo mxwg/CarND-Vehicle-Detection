@@ -21,6 +21,7 @@ print("Using params:", params)
 
 # Get images
 input_folder = "test_images"
+input_folder = "track_images"
 output_folder = "output_images"
 
 try:
@@ -36,7 +37,11 @@ def save(prefix, image_name, image, cmap=None, output=True):
 
 all_images = glob.glob(os.path.join(input_folder, "*.jpg"))
 
-def apply_pipeline(img, output=False):
+from collections import deque
+maps = deque(maxlen=5)
+
+
+def apply_pipeline(img, img_name, output=False):
     windows = get_windows(img)
     print(img.shape, np.max(img))
     print("Using {} windows.".format(len(windows)))
@@ -58,24 +63,29 @@ def apply_pipeline(img, output=False):
     hit_img = draw_bounding_boxes(img, hits)
     save("hits", img_name, hit_img, output=output)
     heat = get_heat_map(img, hits, threshold=1)
+    maps.append(heat)
     save("heatmap", img_name, heat, cmap='hot', output=output)
+    avg_heat = sum(maps)/len(maps)
+    avg_heat[avg_heat <= 3] = 0
+    save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
 
-    labels = label(heat)
+    labels = label(avg_heat)
     final = draw_labeled_bboxes(img, labels)
     save("detections", img_name, final, output=output)
 
-    heat_name = os.path.join(output_folder, "heatmap" + "_" + os.path.basename(img_name))
-    hm = mplimg.imread(heat_name)
-    aug_heat = cv2.addWeighted(final, 1, hm, 0.3, 0)
-    save("augmented", img_name, aug_heat, output=output)
+    if img_name != "unknown":
+        heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
+        hm = mplimg.imread(heat_name)
+        aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
+        save("augmented", img_name, aug_heat, output=output)
+    return final
 
 
 
-t1 = time.time()
-for img_name in all_images:
-    img = mplimg.imread(img_name)
-    apply_pipeline(img, output=True)
-
-    print("image: {}".format(img_name))
-
-print("Done, took {:.2f} s.".format(time.time() - t1))
+if __name__ == '__main__':
+    t1 = time.time()
+    for img_name in all_images[0:-1]:
+        print("image: {}".format(img_name))
+        img = mplimg.imread(img_name)
+        apply_pipeline(img, img_name, output=True)
+    print("Done, took {:.2f} s.".format(time.time() - t1))
