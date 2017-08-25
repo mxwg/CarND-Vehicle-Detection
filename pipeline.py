@@ -17,6 +17,8 @@ import pickle
 with open('hog_svm.p', 'rb') as f:
     (params, clf, scaler) = pickle.load(f)
 
+print("Using params:", params)
+
 # Get images
 input_folder = "test_images"
 output_folder = "output_images"
@@ -45,7 +47,7 @@ def apply_pipeline(img, output=False):
     #hits = search_windows(img, windows, clf, scaler,
     #                     cell_per_block=3, color_space='HSV', hog_channel='ALL', orient=6, pix_per_cell=12)
     hits = search_windows(img, windows, clf, scaler,
-                         cell_per_block=params['cell_per_block'],
+                          cell_per_block=params['cell_per_block'],
                           color_space=params['colorspace'],
                           hog_channel=params['hog_channel'],
                           orient=params['orient'],
@@ -73,4 +75,5 @@ for img_name in all_images:
     apply_pipeline(img, output=True)
 
     print("image: {}".format(img_name))
+
 print("Done, took {:.2f} s.".format(time.time() - t1))

@@ -1,4 +1,5 @@
 import numpy as np
+from skimage.feature import hog
 import cv2
 
 def get_windows(img):
@@ -107,7 +108,7 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
         elif color_space == 'YCrCb':
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        else: feature_image = np.copy(img)
+    else: feature_image = np.copy(img)
     #if hist_feat == True:
         # Apply color_hist()
         #hist_features = color_hist(feature_image, nbins=hist_bins)
@@ -119,16 +120,18 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
             hog_features.extend(get_hog_features(feature_image[:,:,channel],
                                                  orient, pix_per_cell, cell_per_block,
                                                  vis=False))
+        hog_features = np.ravel(hog_features)
     else:
         hog_features = get_hog_features(feature_image[:,:,hog_channel], orient,
                                         pix_per_cell, cell_per_block, vis=False)
     #8) Append features to list
-    img_features.append(hog_features)
+    #img_features.append(np.concatenate(hog_features))
+    img_features = hog_features
+    #img_features.append(hog_features)
 
     #9) Return concatenated array of features
     return img_features
 
-from skimage.feature import hog
 # Define a function to return HOG features and visualization
 def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                         vis=False):
