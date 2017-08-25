@@ -1,5 +1,7 @@
+import numpy as np
+import cv2
 
-def color_hist(img, nbins=32, bins_range=(0, 256)):
+def color_hist(image, nbins=32, bins_range=(0, 1)):
     # Compute the histogram of the RGB channels separately
     rhist = np.histogram(image[:,:,0], bins=32, range=(0, 256))
     ghist = np.histogram(image[:,:,1], bins=32, range=(0, 256))
@@ -10,7 +12,8 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Concatenate the histograms into a single feature vector
     hist_features = np.concatenate((rhist[0], ghist[0], bhist[0]))
     # Return the individual histograms, bin_centers and feature vector
-    return rhist, ghist, bhist, bin_centers, hist_features
+    #return rhist, ghist, bhist, bin_centers, hist_features
+    return hist_features
 
 
 def bin_spatial(img, color_space='RGB', size=(32, 32)):

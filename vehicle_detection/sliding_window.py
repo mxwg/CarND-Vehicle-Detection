@@ -65,7 +65,7 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
                    spatial_size=(32, 32), hist_bins=32,
                    hist_range=(0, 256), orient=9,
                    pix_per_cell=8, cell_per_block=2,
-                   hog_channel=0):
+                   hog_channel=0, hist_feat=True):
 
     #1) Create an empty list to receive positive detection windows
     on_windows = []
@@ -78,7 +78,7 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
                                        spatial_size=spatial_size, hist_bins=hist_bins,
                                        orient=orient, pix_per_cell=pix_per_cell,
                                        cell_per_block=cell_per_block,
-                                       hog_channel=hog_channel)
+                                       hog_channel=hog_channel, hist_feat=hist_feat)
         #5) Scale extracted features to be fed to classifier
         test_features = scaler.transform(np.array(features).reshape(1, -1))
         #6) Predict using your classifier
@@ -109,10 +109,11 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
         elif color_space == 'YCrCb':
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
     else: feature_image = np.copy(img)
-    #if hist_feat == True:
+    if hist_feat == True:
         # Apply color_hist()
-        #hist_features = color_hist(feature_image, nbins=hist_bins)
-        #file_features.append(hist_features)
+        from vehicle_detection.histogram import color_hist
+        hist_features = color_hist(feature_image, nbins=hist_bins)
+        img_features.append(hist_features)
     #3) Compute spatial features
     if hog_channel == 'ALL':
         hog_features = []
@@ -124,13 +125,13 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
     else:
         hog_features = get_hog_features(feature_image[:,:,hog_channel], orient,
                                         pix_per_cell, cell_per_block, vis=False)
+    img_features.append(hog_features)
     #8) Append features to list
     #img_features.append(np.concatenate(hog_features))
-    img_features = hog_features
     #img_features.append(hog_features)
 
     #9) Return concatenated array of features
-    return img_features
+    return np.concatenate(img_features)
 
 # Define a function to return HOG features and visualization
 def get_hog_features(img, orient, pix_per_cell, cell_per_block,

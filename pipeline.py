@@ -51,7 +51,8 @@ def apply_pipeline(img, output=False):
                           color_space=params['colorspace'],
                           hog_channel=params['hog_channel'],
                           orient=params['orient'],
-                          pix_per_cell=params['pix_per_cell'])
+                          pix_per_cell=params['pix_per_cell'],
+                         hist_feat=params['hist_feat'])
     print("took {:.2f} s to find {} hits.".format(time.time()-t1, len(hits)))
     hit_img = draw_bounding_boxes(img, hits)
     save("hits", img_name, hit_img, output=output)
