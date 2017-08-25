@@ -38,6 +38,7 @@ all_images = glob.glob(os.path.join(input_folder, "*.jpg"))
 
 def apply_pipeline(img, output=False):
     windows = get_windows(img)
+    print(img.shape, np.max(img))
     print("Using {} windows.".format(len(windows)))
     #boxes = draw_bounding_boxes(img, windows)
     #save("boxes", img_name, boxes, output=output)
