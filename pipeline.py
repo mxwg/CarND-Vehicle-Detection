@@ -10,7 +10,7 @@ from scipy.ndimage.measurements import label
 
 
 from vehicle_detection.visualization import draw_bounding_boxes
-from vehicle_detection.sliding_window import search_windows, get_windows, get_heat_map, draw_labeled_bboxes
+from vehicle_detection.sliding_window import search_windows, get_windows, get_heat_map, draw_labeled_bboxes, suppress
 
 import pickle
 
@@ -64,20 +64,25 @@ def apply_pipeline(img, img_name, output=False):
     save("hits", img_name, hit_img, output=output)
     heat = get_heat_map(img, hits, threshold=1)
     maps.append(heat)
-    save("heatmap", img_name, heat, cmap='hot', output=output)
-    avg_heat = sum(maps)/len(maps)
-    avg_heat[avg_heat <= 3] = 0
-    save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
+    #save("heatmap", img_name, heat, cmap='hot', output=output)
+    avg_heat = sum(maps)#/len(maps)
+    avg_heat[avg_heat <= 5] = 0
+    print("max", np.max(avg_heat), avg_heat.mean(), avg_heat.std())
 
     labels = label(avg_heat)
-    final = draw_labeled_bboxes(img, labels)
-    save("detections", img_name, final, output=output)
+    suppress(avg_heat, labels, threshold=15)
+    #save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
 
-    if img_name != "unknown":
-        heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
-        hm = mplimg.imread(heat_name)
-        aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
-        save("augmented", img_name, aug_heat, output=output)
+    labels = label(avg_heat)
+
+    final = draw_labeled_bboxes(img, labels)
+    #save("detections", img_name, final, output=output)
+
+    #if img_name != "unknown":
+    #    heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
+    #    hm = mplimg.imread(heat_name)
+    #    aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
+    #    save("augmented", img_name, aug_heat, output=output)
     return final
 
 

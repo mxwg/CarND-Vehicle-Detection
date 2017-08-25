@@ -63,11 +63,22 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     # Return the list of windows
     return window_list
 
+import os, pickle
+import hashlib
+cache_dir = "cache"
+
 def search_windows(img, windows, clf, scaler, color_space='RGB',
                    spatial_size=(32, 32), hist_bins=32,
                    hist_range=(0, 256), orient=9,
                    pix_per_cell=8, cell_per_block=2,
                    hog_channel=0, hist_feat=True):
+
+    h = hashlib.sha1(img).hexdigest()
+    hn = os.path.join(cache_dir, h)
+    if os.path.exists(hn):
+        with open(hn, 'rb') as f:
+            cached = pickle.load(f)
+            return cached
 
     #1) Create an empty list to receive positive detection windows
     on_windows = []
@@ -89,6 +100,10 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
         if prediction == 1:
             on_windows.append(window)
             #8) Return windows for positive detections
+    with open(hn, 'wb') as f:
+        pickle.dump(on_windows, f)
+        print("wrote to cache", hn)
+
     return on_windows
 
 
@@ -186,6 +201,25 @@ def get_heat_map(image, hits, threshold=2):
     heatmap = np.clip(heat, 0, 255)
     return heatmap
 
+def suppress(heat, labels, threshold=15):
+    for car_number in range(1, labels[1]+1):
+        # Find pixels with each car_number label value
+        nonzero = (labels[0] == car_number).nonzero()
+        # Identify x and y values of those pixels
+        nonzeroy = np.array(nonzero[0])
+        nonzerox = np.array(nonzero[1])
+        # Define a bounding box based on min/max x and y
+        minx = np.min(nonzerox)
+        miny = np.min(nonzeroy)
+        maxx = np.max(nonzerox)
+        maxy = np.max(nonzeroy)
+        xsize = maxx - minx
+        ysize = maxy - miny
+        if xsize < threshold or ysize < threshold:
+            bbox = ((minx, miny), (maxx, maxy))
+            cv2.rectangle(heat, bbox[0], bbox[1], (0, 0, 0), -1) # filled
+    return heat
+
 
 def draw_labeled_bboxes(img, labels):
     result = img.copy()
@@ -197,7 +231,13 @@ def draw_labeled_bboxes(img, labels):
         nonzeroy = np.array(nonzero[0])
         nonzerox = np.array(nonzero[1])
         # Define a bounding box based on min/max x and y
-        bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+        minx = np.min(nonzerox)
+        miny = np.min(nonzeroy)
+        maxx = np.max(nonzerox)
+        maxy = np.max(nonzeroy)
+        #bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+        print("size",car_number, maxx-minx, maxy-miny)
+        bbox = ((minx, miny), (maxx, maxy))
         # Draw the box on the image
         cv2.rectangle(result, bbox[0], bbox[1], (0,0,255), 6)
     # Return the image
