@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def color_hist(image, nbins=32, bins_range=(0, 1)):
+def color_hist(image, nbins=32, bins_range=(0, 256)):
     # Compute the histogram of the RGB channels separately
     rhist = np.histogram(image[:,:,0], bins=32, range=(0, 256))
     ghist = np.histogram(image[:,:,1], bins=32, range=(0, 256))

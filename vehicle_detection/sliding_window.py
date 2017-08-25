@@ -18,6 +18,7 @@ def get_windows(img):
                               xy_window=(164,128), xy_overlap=(0.7, 0.5))
 
     windows = w_medium_b + w_medium_s + w_medium_l + w_far
+    windows = w_medium_b + w_medium_s + w_medium_l
     return windows
 
 def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
