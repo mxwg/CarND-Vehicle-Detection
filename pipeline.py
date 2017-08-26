@@ -22,8 +22,8 @@ print("Using params:", params)
 
 # Get images
 input_folder = "test_images"
-input_folder = "track_images"
-#input_folder = "track_images2"
+#input_folder = "track_images"
+input_folder = "track_images2"
 output_folder = "output_images"
 
 try:
@@ -84,7 +84,7 @@ def apply_pipeline(img, img_name, output=False):
 
     # Draw boxes around the hits
     hit_img = draw_bounding_boxes(img, hits)
-    #save("hits", img_name, hit_img, output=output)
+    save("hits", img_name, hit_img, output=output)
 
     # Build a heat map of the most recent hits
     heat = get_heat_map(img, hits, threshold=1)

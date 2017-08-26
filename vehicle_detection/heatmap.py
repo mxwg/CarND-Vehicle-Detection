@@ -75,24 +75,5 @@ def suppress(heat, heat_orig, labels, img, params, clf, scaler, threshold=15):
             cv2.rectangle(heat, bbox[0], bbox[1], (0, 0, 0), -1) # filled
             cv2.rectangle(heat_orig, bbox[0], bbox[1], (0, 0, 0), -1) # filled
 
-       ## verify match
-       #test_img = cv2.resize(img[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]], (64, 64))
-       #features = single_img_features(test_img,
-       #                  cell_per_block=params['cell_per_block'],
-       #                  color_space=params['colorspace'],
-       #                  hog_channel=params['hog_channel'],
-       #                  orient=params['orient'],
-       #                  pix_per_cell=params['pix_per_cell'],
-       #                 hist_feat=params['hist_feat'])
-       ##5) Scale extracted features to be fed to classifier
-       #test_features = scaler.transform(np.array(features).reshape(1, -1))
-       ##6) Predict using your classifier
-       #prediction = clf.predict(test_features)
-       #max_heat = np.max(heat[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]])
-       ##print("\t\tmax_heat in {} is {}".format(car_number, max_heat))
-       #if prediction != 1 and max_heat < 12:
-       #    print("suppress non-match {}".format(car_number))
-       #    cv2.rectangle(heat, bbox[0], bbox[1], (0, 0, 0), -1)
-       #    cv2.rectangle(heat_orig, bbox[0], bbox[1], (0, 0, 0), -1)
 
     return heat
