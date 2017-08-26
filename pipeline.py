@@ -55,7 +55,7 @@ class Loc(object):
     def matches(self, location):
         d = dist(self.position, location)
         #print("dist {:.2f}".format(d))
-        return d <= 27
+        return d <= 30
     def update(self, location, box):
         x = int((self.position[0] + location[0])/2)
         y = int((self.position[1] + location[1])/2)
@@ -65,7 +65,7 @@ class Loc(object):
         self.bbox = (box_min, box_max)
         self.tracked += 1
     def __str__(self):
-        return "\t\t\tCar {} at {} tracked {} times.".format(self.id, self.position, self.tracked)
+        return "Car {} at {} tracked {} times.".format(self.id, self.position, self.tracked)
 
 locations = []
 
@@ -105,10 +105,10 @@ def apply_pipeline(img, img_name, output=False):
         for current, box in zip(current_loc, current_bbox):
             if loc.matches(current):
                 loc.update(current, box)
-                print(loc)
+                #print(loc)
         if prev_t == loc.tracked:
             loc.tracked -= 2
-            print("lost track of", loc)
+            #print("lost track of", loc)
     for current, box in zip(current_loc, current_bbox):
         tracked = False
         for loc in locations:
@@ -116,7 +116,7 @@ def apply_pipeline(img, img_name, output=False):
                 tracked = True
         if not tracked:
             new_car = Loc(current, box)
-            print("Adding new car: {}".format(new_car))
+            #print("Adding new car: {}".format(new_car))
             locations.append(new_car)
 
     # prune tracked locations
