@@ -207,7 +207,8 @@ def get_heat_map(image, hits, threshold=2):
     heatmap = np.clip(heat, 0, 255)
     return heatmap
 
-def suppress(heat, labels, threshold=15):
+def get_locations(heat, labels):
+    locations = []
     for car_number in range(1, labels[1]+1):
         # Find pixels with each car_number label value
         nonzero = (labels[0] == car_number).nonzero()
@@ -221,13 +222,56 @@ def suppress(heat, labels, threshold=15):
         maxy = np.max(nonzeroy)
         xsize = maxx - minx
         ysize = maxy - miny
+        position = (minx + xsize//2, miny + ysize//2)
+        #print("\t\t\t\t\tCar {} is at {}...".format(car_number, position))
+        locations.append(position)
+    return locations
+
+def suppress(heat, heat_orig, labels, img, params, clf, scaler, threshold=15):
+    for car_number in range(1, labels[1]+1):
+        # Find pixels with each car_number label value
+        nonzero = (labels[0] == car_number).nonzero()
+        # Identify x and y values of those pixels
+        nonzeroy = np.array(nonzero[0])
+        nonzerox = np.array(nonzero[1])
+        # Define a bounding box based on min/max x and y
+        minx = np.min(nonzerox)
+        miny = np.min(nonzeroy)
+        maxx = np.max(nonzerox)
+        maxy = np.max(nonzeroy)
+        xsize = maxx - minx
+        ysize = maxy - miny
+        position = (minx + xsize//2, miny + ysize//2)
+        #print("\t\t\t\t\tCar {} is at {}...".format(car_number, position))
+        bbox = ((minx, miny), (maxx, maxy))
         if xsize < threshold or ysize < threshold:
-            bbox = ((minx, miny), (maxx, maxy))
             cv2.rectangle(heat, bbox[0], bbox[1], (0, 0, 0), -1) # filled
+            cv2.rectangle(heat_orig, bbox[0], bbox[1], (0, 0, 0), -1) # filled
+
+        # verify match
+        test_img = cv2.resize(img[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]], (64, 64))
+        features = single_img_features(test_img,
+                          cell_per_block=params['cell_per_block'],
+                          color_space=params['colorspace'],
+                          hog_channel=params['hog_channel'],
+                          orient=params['orient'],
+                          pix_per_cell=params['pix_per_cell'],
+                         hist_feat=params['hist_feat'])
+        #5) Scale extracted features to be fed to classifier
+        test_features = scaler.transform(np.array(features).reshape(1, -1))
+        #6) Predict using your classifier
+        prediction = clf.predict(test_features)
+        max_heat = np.max(heat[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]])
+        print("\t\tmax_heat in {} is {}".format(car_number, max_heat))
+        if prediction != 1 and max_heat < 12:
+            print("suppress non-match {}".format(car_number))
+            cv2.rectangle(heat, bbox[0], bbox[1], (0, 0, 0), -1)
+            cv2.rectangle(heat_orig, bbox[0], bbox[1], (0, 0, 0), -1)
+
     return heat
 
 
-def draw_labeled_bboxes(img, labels, params, clf, scaler):
+def draw_labeled_bboxes(img, labels, params, clf, scaler, locations):
     result = img.copy()
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):
@@ -241,13 +285,23 @@ def draw_labeled_bboxes(img, labels, params, clf, scaler):
         miny = np.min(nonzeroy)
         maxx = np.max(nonzerox)
         maxy = np.max(nonzeroy)
-        #bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
-        print("size",car_number, maxx-minx, maxy-miny)
+        xsize = maxx - minx
+        ysize = maxy - miny
+        position = (minx + xsize//2, miny + ysize//2)
+        #print("size",car_number, xsize, ysize)
         bbox = ((minx, miny), (maxx, maxy))
-        
+        tracked = False
+        for loc in locations:
+            if loc.matches(position) and loc.tracked > 1:
+                tracked = True
+        if not tracked:
+            print("Car is not tracked, not labeling...")
+            continue
+
+
         # verify match
         test_img = cv2.resize(img[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]], (64, 64))
-        features = single_img_features(test_img, 
+        features = single_img_features(test_img,
                           cell_per_block=params['cell_per_block'],
                           color_space=params['colorspace'],
                           hog_channel=params['hog_channel'],
