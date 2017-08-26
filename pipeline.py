@@ -61,12 +61,12 @@ def apply_pipeline(img, img_name, output=False):
                          hist_feat=params['hist_feat'])
     print("took {:.2f} s to find {} hits.".format(time.time()-t1, len(hits)))
     hit_img = draw_bounding_boxes(img, hits)
-    save("hits", img_name, hit_img, output=output)
+    #save("hits", img_name, hit_img, output=output)
     heat = get_heat_map(img, hits, threshold=1)
     maps.append(heat)
     #save("heatmap", img_name, heat, cmap='hot', output=output)
     avg_heat = sum(maps)#/len(maps)
-    avg_heat[avg_heat <= 5] = 0
+    avg_heat[avg_heat <= 2] = 0
     print("max", np.max(avg_heat), avg_heat.mean(), avg_heat.std())
 
     labels = label(avg_heat)
@@ -75,8 +75,8 @@ def apply_pipeline(img, img_name, output=False):
 
     labels = label(avg_heat)
 
-    final = draw_labeled_bboxes(img, labels)
-    save("detections", img_name, final, output=output)
+    final = draw_labeled_bboxes(img, labels,params, clf, scaler)
+    #save("detections", img_name, final, output=output)
 
     if img_name != "unknown":
         heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
@@ -90,7 +90,7 @@ def apply_pipeline(img, img_name, output=False):
 
 if __name__ == '__main__':
     t1 = time.time()
-    for img_name in all_images[0:-1]:
+    for img_name in sorted(all_images)[0:30]:
         print("image: {}".format(img_name))
         #img = mplimg.imread(img_name)
         img = cv2.cvtColor(cv2.imread(img_name), cv2.COLOR_BGR2RGB)

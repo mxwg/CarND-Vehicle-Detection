@@ -227,7 +227,7 @@ def suppress(heat, labels, threshold=15):
     return heat
 
 
-def draw_labeled_bboxes(img, labels):
+def draw_labeled_bboxes(img, labels, params, clf, scaler):
     result = img.copy()
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):
@@ -244,7 +244,26 @@ def draw_labeled_bboxes(img, labels):
         #bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
         print("size",car_number, maxx-minx, maxy-miny)
         bbox = ((minx, miny), (maxx, maxy))
-        # Draw the box on the image
-        cv2.rectangle(result, bbox[0], bbox[1], (0,0,255), 6)
+        
+        # verify match
+        test_img = cv2.resize(img[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]], (64, 64))
+        features = single_img_features(test_img, 
+                          cell_per_block=params['cell_per_block'],
+                          color_space=params['colorspace'],
+                          hog_channel=params['hog_channel'],
+                          orient=params['orient'],
+                          pix_per_cell=params['pix_per_cell'],
+                         hist_feat=params['hist_feat'])
+        #5) Scale extracted features to be fed to classifier
+        test_features = scaler.transform(np.array(features).reshape(1, -1))
+        #6) Predict using your classifier
+        prediction = clf.predict(test_features)
+
+        if prediction == 1:
+            # Draw the box on the image
+            cv2.rectangle(result, bbox[0], bbox[1], (0,0,255), 6)
+        else:
+            cv2.rectangle(result, bbox[0], bbox[1], (255,0,0), 6)
+
     # Return the image
     return result
