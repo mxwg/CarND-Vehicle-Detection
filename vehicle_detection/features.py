@@ -8,8 +8,6 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
     #1) Define an empty list to receive features
     img_features = []
     #2) Apply color conversion if other than 'RGB'
-    #print("color:", color_space, np.mean(img), np.std(img), np.max(img), np.min(img))
-    #print(img.shape)
     if color_space != 'RGB':
         if color_space == 'HSV':
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
@@ -38,10 +36,8 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
     else:
         hog_features = get_hog_features(feature_image[:,:,hog_channel], orient,
                                         pix_per_cell, cell_per_block, vis=False)
-    img_features.append(hog_features)
     #8) Append features to list
-    #img_features.append(np.concatenate(hog_features))
-    #img_features.append(hog_features)
+    img_features.append(hog_features)
 
     #9) Return concatenated array of features
     return np.concatenate(img_features)
