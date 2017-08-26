@@ -1,19 +1,19 @@
 import os
 import time
 import glob
-import matplotlib.image as mplimg
-import numpy as np
 import cv2
+import numpy as np
+import matplotlib.image as mplimg
 import math
+import pickle
 import shutil
 from scipy.ndimage.measurements import label
 
 
-from vehicle_detection.visualization import draw_bounding_boxes
-from vehicle_detection.sliding_window import search_windows, get_windows, get_heat_map, draw_labeled_bboxes, suppress
-from vehicle_detection.sliding_window import get_locations
+from vehicle_detection.sliding_window import search_windows, get_windows
+from vehicle_detection.heatmap import get_heat_map, get_locations, suppress
+from vehicle_detection.visualization import draw_bounding_boxes, draw_labeled_bboxes, dist
 
-import pickle
 
 with open('hog_svm.p', 'rb') as f:
     (params, clf, scaler) = pickle.load(f)
@@ -42,8 +42,6 @@ all_images = glob.glob(os.path.join(input_folder, "*.png"))
 from collections import deque
 maps = deque(maxlen=5)
 
-def dist(loc1, loc2):
-    return math.sqrt((loc1[0]-loc2[0])**2 + (loc1[1]-loc2[1])**2)
 
 import string, random
 class Loc(object):
