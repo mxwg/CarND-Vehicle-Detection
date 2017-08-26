@@ -23,6 +23,7 @@ print("Using params:", params)
 # Get images
 input_folder = "test_images"
 input_folder = "track_images"
+input_folder = "track_images2"
 output_folder = "output_images"
 
 try:
@@ -52,11 +53,11 @@ class Loc(object):
         self.id = ''.join(random.choice(string.ascii_uppercase) for _ in range(4))
     def matches(self, location):
         d = dist(self.position, location)
-        print("dist", d)
+        print("dist {:.2f}".format(d))
         return d <= 25
     def update(self, location):
-        x = (self.position[0] + location[0])/2
-        y = (self.position[1] + location[1])/2
+        x = int((self.position[0] + location[0])/2)
+        y = int((self.position[1] + location[1])/2)
         self.position = (x, y)
         self.tracked += 1
     def __str__(self):
@@ -68,8 +69,6 @@ locations = []
 def apply_pipeline(img, img_name, output=False):
     global locations
     windows = get_windows(img)
-    print(img.shape, np.max(img))
-    print("Using {} windows.".format(len(windows)))
     #boxes = draw_bounding_boxes(img, windows)
     #save("boxes", img_name, boxes, output=output)
 
@@ -84,7 +83,7 @@ def apply_pipeline(img, img_name, output=False):
                           orient=params['orient'],
                           pix_per_cell=params['pix_per_cell'],
                          hist_feat=params['hist_feat'])
-    print("took {:.2f} s to find {} hits.".format(time.time()-t1, len(hits)))
+    #print("took {:.2f} s to find {} hits.".format(time.time()-t1, len(hits)))
     hit_img = draw_bounding_boxes(img, hits)
     #save("hits", img_name, hit_img, output=output)
     heat = get_heat_map(img, hits, threshold=1)
@@ -93,7 +92,7 @@ def apply_pipeline(img, img_name, output=False):
 
     avg_heat = sum(maps)#/len(maps)
     avg_heat[avg_heat <= 4] = 0
-    print("max", np.max(avg_heat), avg_heat.mean(), avg_heat.std())
+    #print("max", np.max(avg_heat), avg_heat.mean(), avg_heat.std())
 
     labels = label(avg_heat)
     current_loc = get_locations(avg_heat, labels)
@@ -104,16 +103,17 @@ def apply_pipeline(img, img_name, output=False):
                 loc.update(current)
                 print(loc)
         if prev_t == loc.tracked:
+            loc.tracked -= 2
             print("lost track of", loc)
-            loc.tracked -= 1
     for current in current_loc:
         tracked = False
         for loc in locations:
             if loc.matches(current):
                 tracked = True
         if not tracked:
-            print("\t\t\tAdding new car: {}".format(current))
-            locations.append(Loc(current))
+            new_car = Loc(current)
+            print("Adding new car: {}".format(new_car))
+            locations.append(new_car)
 
     # prune tracked locations
     locations = [loc for loc in locations if loc.tracked >= 0]
@@ -123,19 +123,19 @@ def apply_pipeline(img, img_name, output=False):
     maps.pop() # update with suppressed heatmap for next time
     maps.append(heat)
     #save("heatmap_sup", img_name, heat, cmap='hot', output=output)
-    #save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
+    save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
 
     labels = label(avg_heat)
 
     final = draw_labeled_bboxes(img, labels, params, clf, scaler, locations)
     save("detections", img_name, final, output=output)
 
-   #if img_name == "unknown":
-   #    heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
-   #    hm = mplimg.imread(heat_name)
-   #    hm = cv2.cvtColor(cv2.imread(heat_name), cv2.COLOR_BGR2RGB)
-   #    aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
-   #    save("augmented", img_name, aug_heat, output=output)
+    if img_name != "unknown":
+        heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
+        hm = mplimg.imread(heat_name)
+        hm = cv2.cvtColor(cv2.imread(heat_name), cv2.COLOR_BGR2RGB)
+        aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
+        save("augmented", img_name, aug_heat, output=output)
     return final
 
 

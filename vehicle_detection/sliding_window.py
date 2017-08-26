@@ -6,8 +6,8 @@ def get_windows(img):
     """Get a list of sliding windows to use."""
     w_foreground = slide_window(img, x_start_stop=[100, 1280], y_start_stop=[300, 720],
                        xy_window=(300,300), xy_overlap=(0.7, 0.7))
-    w_very_far = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[350, 550],
-                         xy_window=(64,48), xy_overlap=(0.7, 0.7))
+    w_very_far = slide_window(img, x_start_stop=[500, 1280], y_start_stop=[300, 650],
+                         xy_window=(64,64), xy_overlap=(0.7, 0.7))
     w_far = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[350, 550],
                          xy_window=(96,64), xy_overlap=(0.5, 0.5))
     w_medium_s = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[400, 650],
@@ -17,9 +17,12 @@ def get_windows(img):
     w_medium_b = slide_window(img, x_start_stop=[18, 1280], y_start_stop=[380, 660],
                               xy_window=(164,128), xy_overlap=(0.7, 0.5))
 
+    far = slide_window(img, x_start_stop=[600, 1100], y_start_stop=[390, 530],
+                                                  xy_window=(48,48), xy_overlap=(0.8, 0.5))
+
     windows = w_medium_b + w_medium_s + w_medium_l + w_far
     windows = w_medium_b + w_medium_s + w_medium_l
-    windows = w_far + w_medium_s + w_medium_l
+    windows = w_far + w_medium_s + w_medium_l + far
     return windows
 
 def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
@@ -262,7 +265,7 @@ def suppress(heat, heat_orig, labels, img, params, clf, scaler, threshold=15):
         #6) Predict using your classifier
         prediction = clf.predict(test_features)
         max_heat = np.max(heat[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]])
-        print("\t\tmax_heat in {} is {}".format(car_number, max_heat))
+        #print("\t\tmax_heat in {} is {}".format(car_number, max_heat))
         if prediction != 1 and max_heat < 12:
             print("suppress non-match {}".format(car_number))
             cv2.rectangle(heat, bbox[0], bbox[1], (0, 0, 0), -1)
