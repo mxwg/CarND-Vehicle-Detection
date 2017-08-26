@@ -98,6 +98,16 @@ def apply_pipeline(img, img_name, output=False):
     # Find labels corresponding to heat map clusters
     labels = label(avg_heat)
 
+    # Suppress very small and spurious activations in the average and current heat map
+    suppress(avg_heat, heat, labels, img, params, clf, scaler, threshold=15)
+    maps.pop() # update with suppressed heatmap for next time
+    maps.append(heat)
+    #save("heatmap_sup", img_name, heat, cmap='hot', output=output)
+    save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
+
+    # Find the clusters again
+    labels = label(avg_heat)
+
     # Get the locations of all clusters
     current_loc, current_bbox = get_locations(avg_heat, labels)
 
@@ -125,15 +135,6 @@ def apply_pipeline(img, img_name, output=False):
     # Prune tracked locations
     locations = [loc for loc in locations if loc.tracked >= 0]
 
-    # Suppress very small and spurious activations in the average and current heat map
-    suppress(avg_heat, heat, labels, img, params, clf, scaler, threshold=15)
-    maps.pop() # update with suppressed heatmap for next time
-    maps.append(heat)
-    #save("heatmap_sup", img_name, heat, cmap='hot', output=output)
-    save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
-
-    # Find the clusters again
-    labels = label(avg_heat)
 
     # Draw boxes around the tracked locations
     final = draw_labeled_bboxes(img, labels, params, clf, scaler, locations)
