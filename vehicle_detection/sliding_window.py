@@ -1,28 +1,24 @@
 import numpy as np
 import cv2
+import os, pickle
+import hashlib
+import matplotlib.image as mplimg
 
 from vehicle_detection.features import single_img_features
 
+cache_dir = "cache"
+
 def get_windows(img):
     """Get a list of sliding windows to use."""
-    w_foreground = slide_window(img, x_start_stop=[100, 1280], y_start_stop=[300, 720],
-                       xy_window=(300,300), xy_overlap=(0.7, 0.7))
-    w_very_far = slide_window(img, x_start_stop=[500, 1280], y_start_stop=[300, 650],
-                         xy_window=(64,64), xy_overlap=(0.7, 0.7))
     w_far = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[350, 550],
                          xy_window=(96,64), xy_overlap=(0.5, 0.5))
     w_medium_s = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[400, 650],
                               xy_window=(128,96), xy_overlap=(0.7, 0.7))
     w_medium_l = slide_window(img, x_start_stop=[0, 1280], y_start_stop=[400, 660],
                               xy_window=(128,128), xy_overlap=(0.5, 0.5))
-    w_medium_b = slide_window(img, x_start_stop=[18, 1280], y_start_stop=[380, 660],
-                              xy_window=(164,128), xy_overlap=(0.7, 0.5))
-
     far = slide_window(img, x_start_stop=[600, 1100], y_start_stop=[390, 530],
                                                   xy_window=(48,48), xy_overlap=(0.8, 0.5))
 
-    windows = w_medium_b + w_medium_s + w_medium_l + w_far
-    windows = w_medium_b + w_medium_s + w_medium_l
     windows = w_far + w_medium_s + w_medium_l + far
     return windows
 
@@ -67,17 +63,13 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     # Return the list of windows
     return window_list
 
-import os, pickle
-import hashlib
-cache_dir = "cache"
-import matplotlib.image as mplimg
-
 def search_windows(img, windows, clf, scaler, color_space='RGB',
                    spatial_size=(32, 32), hist_bins=32,
                    hist_range=(0, 256), orient=9,
                    pix_per_cell=8, cell_per_block=2,
                    hog_channel=0, hist_feat=True):
-
+    """Search for cars in a window list."""
+    # use caching for the hog features to speed things up
     h = hashlib.sha1(img).hexdigest()
     hn = os.path.join(cache_dir, h)
     if os.path.exists(hn):
@@ -85,14 +77,14 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
             cached = pickle.load(f)
             return cached
 
+    # if there is no cached result, compute it...
+
     #1) Create an empty list to receive positive detection windows
     on_windows = []
     #2) Iterate over all windows in the list
     for window in windows:
         #3) Extract the test window from original image
         test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
-
-        #mplimg.imsave("cut/" + hashlib.sha1(test_img).hexdigest() + ".png", test_img)
 
         #4) Extract features for that window using single_img_features()
         features = single_img_features(test_img, color_space=color_space,
@@ -108,6 +100,8 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
         if prediction == 1:
             on_windows.append(window)
             #8) Return windows for positive detections
+
+    # but save the result for next time
     with open(hn, 'wb') as f:
         pickle.dump(on_windows, f)
         print("wrote to cache", hn)

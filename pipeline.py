@@ -52,7 +52,6 @@ class Loc(object):
         self.id = ''.join(random.choice(string.ascii_uppercase) for _ in range(4))
     def matches(self, location):
         d = dist(self.position, location)
-        #print("dist {:.2f}".format(d))
         return d <= 30
     def update(self, location, box):
         x = int((self.position[0] + location[0])/2)
@@ -70,14 +69,10 @@ locations = []
 
 def apply_pipeline(img, img_name, output=False):
     global locations
+    # Get list of window locations
     windows = get_windows(img)
-    #boxes = draw_bounding_boxes(img, windows)
-    #save("boxes", img_name, boxes, output=output)
 
-    # cell_per_block: 3, colorspace: HSV, hog_channel: ALL, orient: 6, pix_per_cell: 12,
-    t1 = time.time()
-    #hits = search_windows(img, windows, clf, scaler,
-    #                     cell_per_block=3, color_space='HSV', hog_channel='ALL', orient=6, pix_per_cell=12)
+    # Classify all windows with the SVM
     hits = search_windows(img, windows, clf, scaler,
                           cell_per_block=params['cell_per_block'],
                           color_space=params['colorspace'],
@@ -85,19 +80,28 @@ def apply_pipeline(img, img_name, output=False):
                           orient=params['orient'],
                           pix_per_cell=params['pix_per_cell'],
                          hist_feat=params['hist_feat'])
-    #print("took {:.2f} s to find {} hits.".format(time.time()-t1, len(hits)))
+
+
+    # Draw boxes around the hits
     hit_img = draw_bounding_boxes(img, hits)
     #save("hits", img_name, hit_img, output=output)
+
+    # Build a heat map of the most recent hits
     heat = get_heat_map(img, hits, threshold=1)
-    maps.append(heat)
     #save("heatmap", img_name, heat, cmap='hot', output=output)
 
-    avg_heat = sum(maps)#/len(maps)
-    avg_heat[avg_heat <= 4] = 0
-    #print("max", np.max(avg_heat), avg_heat.mean(), avg_heat.std())
+    # Average over the last 5 heat maps
+    maps.append(heat)
+    avg_heat = sum(maps)
+    avg_heat[avg_heat <= 4] = 0 # threshold weak signals
 
+    # Find labels corresponding to heat map clusters
     labels = label(avg_heat)
+
+    # Get the locations of all clusters
     current_loc, current_bbox = get_locations(avg_heat, labels)
+
+    # Update the locations of previously tracked clusters
     for loc in locations:
         prev_t = loc.tracked
         for current, box in zip(current_loc, current_bbox):
@@ -106,7 +110,8 @@ def apply_pipeline(img, img_name, output=False):
                 #print(loc)
         if prev_t == loc.tracked:
             loc.tracked -= 2
-            #print("lost track of", loc)
+
+    # Add new clusters to the tracking list
     for current, box in zip(current_loc, current_bbox):
         tracked = False
         for loc in locations:
@@ -114,23 +119,27 @@ def apply_pipeline(img, img_name, output=False):
                 tracked = True
         if not tracked:
             new_car = Loc(current, box)
-            #print("Adding new car: {}".format(new_car))
             locations.append(new_car)
+            #print("Adding new car: {}".format(new_car))
 
-    # prune tracked locations
+    # Prune tracked locations
     locations = [loc for loc in locations if loc.tracked >= 0]
 
+    # Suppress very small and spurious activations in the average and current heat map
     suppress(avg_heat, heat, labels, img, params, clf, scaler, threshold=15)
     maps.pop() # update with suppressed heatmap for next time
     maps.append(heat)
     #save("heatmap_sup", img_name, heat, cmap='hot', output=output)
     save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
 
+    # Find the clusters again
     labels = label(avg_heat)
 
+    # Draw boxes around the tracked locations
     final = draw_labeled_bboxes(img, labels, params, clf, scaler, locations)
     save("detections", img_name, final, output=output)
 
+    # Save an augmented detection map
     if img_name != "unknown":
         heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
         hm = mplimg.imread(heat_name)
