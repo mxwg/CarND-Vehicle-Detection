@@ -35,7 +35,7 @@ def save(prefix, image_name, image, cmap=None, output=True):
         file_name = os.path.join(output_folder, prefix + "_" + os.path.basename(image_name))
         mplimg.imsave(file_name, image, cmap=cmap)
 
-all_images = glob.glob(os.path.join(input_folder, "*.jpg"))
+all_images = glob.glob(os.path.join(input_folder, "*.png"))
 
 from collections import deque
 maps = deque(maxlen=5)
@@ -81,6 +81,7 @@ def apply_pipeline(img, img_name, output=False):
     if img_name != "unknown":
         heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
         hm = mplimg.imread(heat_name)
+        hm = cv2.cvtColor(cv2.imread(heat_name), cv2.COLOR_BGR2RGB)
         aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
         save("augmented", img_name, aug_heat, output=output)
     return final
@@ -91,7 +92,9 @@ if __name__ == '__main__':
     t1 = time.time()
     for img_name in all_images[0:-1]:
         print("image: {}".format(img_name))
-        img = mplimg.imread(img_name)
+        #img = mplimg.imread(img_name)
+        img = cv2.cvtColor(cv2.imread(img_name), cv2.COLOR_BGR2RGB)
+
         #print("stats:", np.mean(img), np.std(img), np.max(img), np.min(img))
         apply_pipeline(img, img_name, output=True)
     print("Done, took {:.2f} s.".format(time.time() - t1))
