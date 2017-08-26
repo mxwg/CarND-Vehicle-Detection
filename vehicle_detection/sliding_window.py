@@ -66,6 +66,7 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
 import os, pickle
 import hashlib
 cache_dir = "cache"
+import matplotlib.image as mplimg
 
 def search_windows(img, windows, clf, scaler, color_space='RGB',
                    spatial_size=(32, 32), hist_bins=32,
@@ -86,6 +87,9 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     for window in windows:
         #3) Extract the test window from original image
         test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
+
+        #mplimg.imsave("cut/" + hashlib.sha1(test_img).hexdigest() + ".png", test_img)
+
         #4) Extract features for that window using single_img_features()
         features = single_img_features(test_img, color_space=color_space,
                                        spatial_size=spatial_size, hist_bins=hist_bins,
@@ -114,6 +118,8 @@ def single_img_features(img, color_space='RGB', spatial_size=(32, 32),
     #1) Define an empty list to receive features
     img_features = []
     #2) Apply color conversion if other than 'RGB'
+    #print("color:", color_space, np.mean(img), np.std(img), np.max(img), np.min(img))
+    #print(img.shape)
     if color_space != 'RGB':
         if color_space == 'HSV':
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)

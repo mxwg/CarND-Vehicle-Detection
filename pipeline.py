@@ -71,18 +71,18 @@ def apply_pipeline(img, img_name, output=False):
 
     labels = label(avg_heat)
     suppress(avg_heat, labels, threshold=15)
-    #save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
+    save("avgheatmap", img_name, avg_heat, cmap='hot', output=output)
 
     labels = label(avg_heat)
 
     final = draw_labeled_bboxes(img, labels)
-    #save("detections", img_name, final, output=output)
+    save("detections", img_name, final, output=output)
 
-    #if img_name != "unknown":
-    #    heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
-    #    hm = mplimg.imread(heat_name)
-    #    aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
-    #    save("augmented", img_name, aug_heat, output=output)
+    if img_name != "unknown":
+        heat_name = os.path.join(output_folder, "avgheatmap" + "_" + os.path.basename(img_name))
+        hm = mplimg.imread(heat_name)
+        aug_heat = cv2.addWeighted(final, 1, hm, 0.6, 0)
+        save("augmented", img_name, aug_heat, output=output)
     return final
 
 
@@ -92,5 +92,6 @@ if __name__ == '__main__':
     for img_name in all_images[0:-1]:
         print("image: {}".format(img_name))
         img = mplimg.imread(img_name)
+        #print("stats:", np.mean(img), np.std(img), np.max(img), np.min(img))
         apply_pipeline(img, img_name, output=True)
     print("Done, took {:.2f} s.".format(time.time() - t1))
