@@ -1,4 +1,4 @@
-**Vehicle Detection Project**
+# **Vehicle Detection Project**
 
 The goals / steps of this project are the following:
 
@@ -20,18 +20,19 @@ The goals / steps of this project are the following:
 [augmented]: ./images/augmented_output_00752.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+
+Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-###Writeup / README
+# Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
 
 You're reading it!
 
-###Histogram of Oriented Gradients (HOG)
+### Histogram of Oriented Gradients (HOG)
 
-####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
 The code for SVN training can be found in the Jupyter Notebook `SVN-Training.ipynb`.
 
@@ -44,7 +45,7 @@ An example for HOG features can be seen below.
 ![Example HOG features][hog]
 
 
-####2. + 3. Explain how you settled on your final choice of HOG parameters and describe how you trained a classifier
+#### 2. + 3. Explain how you settled on your final choice of HOG parameters and describe how you trained a classifier
 
 For finding the HOG parameters I used a small random grid search in the `SVN-Training.ipynb` notebook.
 
@@ -58,9 +59,9 @@ For each training, the final accuracy of the SVM was printed and I chose a param
 The parameters, SVM and scaler were then pickled and saved to disk.
 
 
-###Sliding Window Search
+### Sliding Window Search
 
-####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
 The sliding window approach is implemented in the file `vehicle_detection/sliding_window.py`.
 
@@ -71,7 +72,7 @@ A visualization of the windows can be seen below.
 ![Sliding windows][sliding_windows]
 
 
-####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Via the file `pipeline.py`, I incrementally built up my pipeline.
 I implemented a `save` function that can save images of intermediate states to the harddisk.
@@ -93,11 +94,11 @@ The final detection results can be seen below:
 
 ### Video Implementation
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 Here's a [link to my video result](./project_video_augmented.mp4)
 
 
-####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+#### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
 In the function `apply_pipeline` in `pipeline.py`, the labels extracted via `scipy.ndimage.measurements.label()` from a heatmap 
 are used to compute the center for each detected cluster (`get_locations` in `vehicle_detection/heatmap.py`).
@@ -126,9 +127,9 @@ heatmap:
 
 ---
 
-###Discussion
+### Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
 
