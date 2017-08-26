@@ -23,7 +23,7 @@ print("Using params:", params)
 # Get images
 input_folder = "test_images"
 input_folder = "track_images"
-input_folder = "track_images2"
+#input_folder = "track_images2"
 output_folder = "output_images"
 
 try:
@@ -47,18 +47,22 @@ def dist(loc1, loc2):
 
 import string, random
 class Loc(object):
-    def __init__(self, position):
+    def __init__(self, position, bbox):
         self.tracked = 0
         self.position = position
+        self.bbox = bbox
         self.id = ''.join(random.choice(string.ascii_uppercase) for _ in range(4))
     def matches(self, location):
         d = dist(self.position, location)
-        print("dist {:.2f}".format(d))
-        return d <= 25
-    def update(self, location):
+        #print("dist {:.2f}".format(d))
+        return d <= 27
+    def update(self, location, box):
         x = int((self.position[0] + location[0])/2)
         y = int((self.position[1] + location[1])/2)
         self.position = (x, y)
+        box_min = (int((self.bbox[0][0] + box[0][0])/2), int((self.bbox[0][1] + box[0][1])/2))
+        box_max = (int((self.bbox[1][0] + box[1][0])/2), int((self.bbox[1][1] + box[1][1])/2))
+        self.bbox = (box_min, box_max)
         self.tracked += 1
     def __str__(self):
         return "\t\t\tCar {} at {} tracked {} times.".format(self.id, self.position, self.tracked)
@@ -95,29 +99,28 @@ def apply_pipeline(img, img_name, output=False):
     #print("max", np.max(avg_heat), avg_heat.mean(), avg_heat.std())
 
     labels = label(avg_heat)
-    current_loc = get_locations(avg_heat, labels)
+    current_loc, current_bbox = get_locations(avg_heat, labels)
     for loc in locations:
         prev_t = loc.tracked
-        for current in current_loc:
+        for current, box in zip(current_loc, current_bbox):
             if loc.matches(current):
-                loc.update(current)
+                loc.update(current, box)
                 print(loc)
         if prev_t == loc.tracked:
             loc.tracked -= 2
             print("lost track of", loc)
-    for current in current_loc:
+    for current, box in zip(current_loc, current_bbox):
         tracked = False
         for loc in locations:
             if loc.matches(current):
                 tracked = True
         if not tracked:
-            new_car = Loc(current)
+            new_car = Loc(current, box)
             print("Adding new car: {}".format(new_car))
             locations.append(new_car)
 
     # prune tracked locations
     locations = [loc for loc in locations if loc.tracked >= 0]
-
 
     suppress(avg_heat, heat, labels, img, params, clf, scaler, threshold=15)
     maps.pop() # update with suppressed heatmap for next time

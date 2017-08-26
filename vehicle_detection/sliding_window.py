@@ -212,6 +212,7 @@ def get_heat_map(image, hits, threshold=2):
 
 def get_locations(heat, labels):
     locations = []
+    bboxes = []
     for car_number in range(1, labels[1]+1):
         # Find pixels with each car_number label value
         nonzero = (labels[0] == car_number).nonzero()
@@ -226,9 +227,11 @@ def get_locations(heat, labels):
         xsize = maxx - minx
         ysize = maxy - miny
         position = (minx + xsize//2, miny + ysize//2)
+        bbox = ((minx, miny), (maxx, maxy))
         #print("\t\t\t\t\tCar {} is at {}...".format(car_number, position))
         locations.append(position)
-    return locations
+        bboxes.append(bbox)
+    return locations, bboxes
 
 def suppress(heat, heat_orig, labels, img, params, clf, scaler, threshold=15):
     for car_number in range(1, labels[1]+1):
@@ -276,6 +279,30 @@ def suppress(heat, heat_orig, labels, img, params, clf, scaler, threshold=15):
 
 def draw_labeled_bboxes(img, labels, params, clf, scaler, locations):
     result = img.copy()
+    for loc in locations:
+        if loc.tracked > 2:
+            cv2.rectangle(result, loc.bbox[0], loc.bbox[1], (0,255,0), 6)
+            #print("labeling car {}".format(loc.id))
+            # verify with prediction
+            test_img = cv2.resize(img[loc.bbox[0][1]:loc.bbox[1][1], loc.bbox[0][0]:loc.bbox[1][0]], (64, 64))
+            features = single_img_features(test_img,
+                              cell_per_block=params['cell_per_block'],
+                              color_space=params['colorspace'],
+                              hog_channel=params['hog_channel'],
+                              orient=params['orient'],
+                              pix_per_cell=params['pix_per_cell'],
+                             hist_feat=params['hist_feat'])
+            #5) Scale extracted features to be fed to classifier
+            test_features = scaler.transform(np.array(features).reshape(1, -1))
+            #6) Predict using your classifier
+            prediction = clf.predict(test_features)
+            if prediction == 1:
+                loc.tracked += 1
+                print("++")
+            else:
+                loc.tracked -= 2
+                print("--")
+    return result
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):
         # Find pixels with each car_number label value
